@@ -11,9 +11,6 @@ call venv\Scripts\activate
 echo Pulling latest changes from Git...
 git pull
 
-:: Install or update dependencies
-echo Updating dependencies...
-pip install -r requirements.txt
 
 :: Run migrations
 echo Running migrations...
