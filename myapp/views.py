@@ -1,6 +1,4 @@
 from django.shortcuts import render
 
-# Create your views here.
-
-def home(x):
-    return 0
+def home(request):
+    return render(request, 'home.html', {'message': 'Welcome to My Django App!'})
