@@ -12,7 +12,7 @@ echo Pulling latest changes from Git...
 git pull
 
 :: Set name user pass
-set DB_NAME=DB-WAWA
+set DB_NAME=DB-DAM
 set DB_USER=sa
 set DB_PASSWORD=Bc@f2020++
 set DB_HOST=192.168.1.21

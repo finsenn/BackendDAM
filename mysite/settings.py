@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': os.getenv('DB_NAME', 'your_database_name'),  # Default value as fallback
+        'NAME': os.getenv('DB_NAME', 'DB-DAM'),  # Default value as fallback
         'USER': os.getenv('DB_USER', ''), 
         'PASSWORD': os.getenv('DB_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', '127.0.0.1'),
