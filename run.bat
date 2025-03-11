@@ -22,6 +22,6 @@ python manage.py migrate
 
 :: Start Django server
 echo Starting Django development server...
-python manage.py runserver
+python manage.py runserver 0.0.0.0:8000
 
 :: Note: This will keep running until you press Ctrl+C
