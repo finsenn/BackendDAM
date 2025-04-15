@@ -80,7 +80,7 @@ DATABASES = {
         'USER': "sa",
         'PASSWORD': "Bc@f2020++",
         'HOST': "192.168.1.21",
-        'PORT': "8080",
+        'PORT': "1443",
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
         },
