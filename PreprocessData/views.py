@@ -9,7 +9,7 @@ def run_log_processing(request):
     return HttpResponse(result)
 # Create your views here.
 
-def import_view(request):
+def insert_db(request):
     csv_path = os.path.join(os.path.dirname(__file__), 'CSVDAM', 'log.csv')
     result = import_logs_to_db(csv_path)
     return HttpResponse(result)

@@ -17,12 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls import path, include  # ✅ include must be imported
-from . import views
+from PreprocessData import views
+from myapp import views as views2
+
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('PreprocessData.urls')),
-    path('import-logs/', views.import_view, name='import_logs'),
+     path('process-logs/', views.process_logs, name='import-logs'),
+     path('insert-db', views.insert_db, name="insert-db")
     
 ]
