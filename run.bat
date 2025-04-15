@@ -20,6 +20,7 @@ git pull
 
 :: Run migrations
 echo Running migrations...
+python manage.py makemigrations
 python manage.py migrate
 
 :: Collect static files (uncomment if needed)
