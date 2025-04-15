@@ -74,9 +74,17 @@ WSGI_APPLICATION = 'BackendDAM.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'mssql',
+        'NAME': 'DB-DAM',
+        'USER': 'sa',
+        'PASSWORD': 'Bc@f2020++',
+        'HOST': '192.168.1.21',
+        'PORT': '1433',  # Default SQL Server port
+        'OPTIONS': {
+                        'driver': 'ODBC Driver 17 for SQL Server',
+                        'trusted_connection': 'yes',
+                    },
+    },
 }
 
 

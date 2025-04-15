@@ -5,7 +5,7 @@ echo Starting Git Pull and Django Server...
 cd /d C:\BackendDAM
 
 :: Activate virtual environment
-call venv\Scripts\activate
+:: call venv\Scripts\activate
 
 :: Pull latest changes from Git
 echo Pulling latest changes from Git...
