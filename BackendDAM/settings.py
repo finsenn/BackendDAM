@@ -76,11 +76,11 @@ WSGI_APPLICATION = 'BackendDAM.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',  # use 'mssql' with mssql-django
-        'NAME': os.getenv("DB_NAME"),
-        'USER': os.getenv("DB_USER"),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+        'NAME': "DB-DAM",
+        'USER': "sa",
+        'PASSWORD': "Bc@f2020++",
+        'HOST': "192.168.1.21",
+        'PORT': "8080",
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
         },
