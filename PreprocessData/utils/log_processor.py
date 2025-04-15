@@ -8,11 +8,11 @@ from datetime import datetime
 from PreprocessData.models import LogEntry  # Import your model
 
 
-
+input_file = './CSVDAM/DAM_LOG_26Feb2025.csv'
 
 
 def process_logs():
-    input_file = './CSVDAM/DAM_LOG_26Feb2025.csv'
+    
     output_dir = './CSVDAM/output'
 
     if not os.path.exists(input_file):
@@ -63,6 +63,9 @@ def process_logs():
     suspicious_queries[['Timestamp', 'User', 'Query']].to_csv(f'{output_dir}/suspicious_queries.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
 
     return f"✅ All CSVs exported to the '{output_dir}' directory!"
+
+
+
 def import_logs_to_db(csv_path):
     if not os.path.exists(csv_path):
         return f"❌ File {csv_path} not found"
