@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-import os  # Required for environment variable usage
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +25,7 @@ SECRET_KEY = 'django-insecure-+u%$k8z4b4tu176@h$-mlq8i1_$*!23ez&m^#bj5v7)@=wyk+f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.1.21", "127.0.0.1"]
+ALLOWED_HOSTS = ["192.168.1.21","127.0.0.1"]
 
 
 # Application definition
@@ -70,20 +69,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'BackendDAM.wsgi.application'
 
 
-# Database (Using SQL Server)
-# Ensure `mssql-django` or `django-mssql-backend` is installed
+# Database
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',  # use 'mssql' with mssql-django
-        'NAME': "DB-DAM",
-        'USER': "sa",
-        'PASSWORD': "Bc@f2020++",
-        'HOST': "192.168.1.21",
-        'PORT': "1443",
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -123,7 +115,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
