@@ -17,10 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls import path, include  # ✅ include must be imported
+from . import views
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('PreprocessData.urls')),
+    path('import-logs/', views.import_view, name='import_logs'),
     
 ]

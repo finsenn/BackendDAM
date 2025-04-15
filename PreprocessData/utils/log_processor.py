@@ -4,6 +4,13 @@ import re
 import csv
 import os
 
+from datetime import datetime
+from PreprocessData.models import LogEntry  # Import your model
+
+
+
+
+
 def process_logs():
     input_file = './CSVDAM/DAM_LOG_26Feb2025.csv'
     output_dir = './CSVDAM/output'
@@ -56,3 +63,25 @@ def process_logs():
     suspicious_queries[['Timestamp', 'User', 'Query']].to_csv(f'{output_dir}/suspicious_queries.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
 
     return f"✅ All CSVs exported to the '{output_dir}' directory!"
+def import_logs_to_db(csv_path):
+    if not os.path.exists(csv_path):
+        return f"❌ File {csv_path} not found"
+
+    df = pd.read_csv(csv_path)
+
+    df['Timestamp'] = pd.to_datetime(df['Time Group - 1 Minute'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce')
+    df['Affected Rows'] = pd.to_numeric(df['Affected Rows'], errors='coerce').fillna(0).astype(int)
+    df['Response Size'] = pd.to_numeric(df['Response Size'], errors='coerce').fillna(0).astype(int)
+
+    for _, row in df.iterrows():
+        LogEntry.objects.create(
+            timestamp=row['Timestamp'],
+            user=row['User'],
+            event_type=row.get('Event Type', ''),
+            object_name=row.get('Object', ''),
+            affected_rows=row['Affected Rows'],
+            response_size=row['Response Size'],
+            query=row.get('Query', ''),
+        )
+    
+    return f"✅ {len(df)} rows inserted into database"
