@@ -5,7 +5,7 @@ import csv
 import os
 
 def process_logs():
-    input_file = './CSVDAM/log.csv'
+    input_file = './CSVDAM/DAM_LOG_26Feb2025.csv'
     output_dir = './CSVDAM/output'
 
     if not os.path.exists(input_file):
