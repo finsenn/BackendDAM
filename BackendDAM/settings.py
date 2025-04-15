@@ -75,7 +75,7 @@ WSGI_APPLICATION = 'BackendDAM.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': os.getenv("DATABASE_NAME")',
+        'NAME': os.getenv("DATABASE_NAME"),
         'USER' : os.getenv("DATABASE_USER"),
         'PASSWORD': os.getenv('DATABASE_PASSWORD'),
         'HOST': os.getenv('DATABASE_HOST'),
