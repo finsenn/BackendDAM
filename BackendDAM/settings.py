@@ -75,7 +75,7 @@ WSGI_APPLICATION = 'BackendDAM.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'mysql',  # use 'mssql' with mssql-django
+        'ENGINE': 'django.db.backends.mysql',  # use 'mssql' with mssql-django
         'NAME': "DB-DAM",
         'USER': "sa",
         'PASSWORD': "Bc@f2020++",
