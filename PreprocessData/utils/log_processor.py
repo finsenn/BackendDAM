@@ -70,7 +70,7 @@ def import_logs_to_db(csv_path):
     if not os.path.exists(csv_path):
         return f"❌ File {csv_path} not found"
 
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(input_file)
 
     df['Timestamp'] = pd.to_datetime(df['Time Group - 1 Minute'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce')
     df['Affected Rows'] = pd.to_numeric(df['Affected Rows'], errors='coerce').fillna(0).astype(int)
