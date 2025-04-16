@@ -66,9 +66,9 @@ def process_logs():
 
 
 
-def import_logs_to_db(csv_path):
-    if not os.path.exists(csv_path):
-        return f"❌ File {csv_path} not found"
+def import_logs_to_db():
+    if not os.path.exists(input_file):
+        return f"❌ File {input_file} not found"
 
     df = pd.read_csv(input_file)
 
@@ -86,5 +86,5 @@ def import_logs_to_db(csv_path):
             response_size=row['Response Size'],
             query=row.get('Query', ''),
         )
-    
+
     return f"✅ {len(df)} rows inserted into database"
