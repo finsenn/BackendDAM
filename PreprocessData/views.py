@@ -11,7 +11,7 @@ def run_log_processing(request):
     return HttpResponse(result)
 # Create your views here.
 
-@require_http_methods(["POST"])
+
 def insert_db(request):
     result = import_logs_to_db()
 
