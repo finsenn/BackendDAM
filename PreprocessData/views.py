@@ -10,12 +10,14 @@ def run_log_processing(request):
     return HttpResponse(result)
 # Create your views here.
 
+@require_http_methods(["POST"])
 def insert_db(request):
     result = import_logs_to_db()
+
     return api_response(
         status=result.get('status'),
         message=result.get('message'),
         data={'inserted_rows': result.get('inserted_rows', 0)},
         http_code=result.get('http_code', 500),
         api_code=result.get('api_code', '')
-    )    
+    )

@@ -68,23 +68,47 @@ def process_logs():
 
 def import_logs_to_db():
     if not os.path.exists(input_file):
-        return f"❌ File {input_file} not found"
+        return {
+            'status': 'error',
+            'message': f"❌ File {input_file} not found",
+            'inserted_rows': 0,
+            'http_code': 404,
+            'api_code': 'IMPORT_FILE_NOT_FOUND'
+        }
 
-    df = pd.read_csv(input_file)
+    try:
+        df = pd.read_csv(input_file)
 
-    df['Timestamp'] = pd.to_datetime(df['Time Group - 1 Minute'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce')
-    df['Affected Rows'] = pd.to_numeric(df['Affected Rows'], errors='coerce').fillna(0).astype(int)
-    df['Response Size'] = pd.to_numeric(df['Response Size'], errors='coerce').fillna(0).astype(int)
+        df['Timestamp'] = pd.to_datetime(df['Time Group - 1 Minute'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce')
+        df['Affected Rows'] = pd.to_numeric(df['Affected Rows'], errors='coerce').fillna(0).astype(int)
+        df['Response Size'] = pd.to_numeric(df['Response Size'], errors='coerce').fillna(0).astype(int)
 
-    for _, row in df.iterrows():
-        LogEntry.objects.create(
-            timestamp=row['Timestamp'],
-            user=row['User'],
-            event_type=row.get('Event Type', ''),
-            object_name=row.get('Object', ''),
-            affected_rows=row['Affected Rows'],
-            response_size=row['Response Size'],
-            query=row.get('Query', ''),
-        )
+        inserted_count = 0
+        for _, row in df.iterrows():
+            LogEntry.objects.create(
+                timestamp=row['Timestamp'],
+                user=row['User'],
+                event_type=row.get('Event Type', ''),
+                object_name=row.get('Object', ''),
+                affected_rows=row['Affected Rows'],
+                response_size=row['Response Size'],
+                query=row.get('Query', ''),
+            )
+            inserted_count += 1
 
-    return f"✅ {len(df)} rows inserted into database"
+        return {
+            'status': 'success',
+            'message': f"✅ {inserted_count} rows inserted into database",
+            'inserted_rows': inserted_count,
+            'http_code': 200,
+            'api_code': 'IMPORT_SUCCESS'
+        }
+
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': f"❌ Import failed: {str(e)}",
+            'inserted_rows': 0,
+            'http_code': 500,
+            'api_code': 'IMPORT_EXCEPTION'
+        }
