@@ -31,7 +31,8 @@ def delete_page(request):
     return render(request, 'delete_interface.html', {'files': files})
 
 def delete_file_data(request, file_id):
-    file = get_object_or_404(ImportedFile, id=file_id)
-    file.logs.all().delete()
-    file.delete()
+    if request.method == 'POST':  # ✅ Only allow POST for deletion
+        file = get_object_or_404(ImportedFile, id=file_id)
+        file.logs.all().delete()  # ✅ Delete related LogEntry records
+        file.delete()             # ✅ Delete the ImportedFile record itself
     return redirect('delete_page')

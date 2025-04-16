@@ -1,12 +1,38 @@
 <!-- templates/delete_interface.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Delete Imported Log Data</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 5px 10px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #c9302c;
+        }
+    </style>
 </head>
 <body>
-    <h1>Delete Imported Log Data</h1>
-    <table border="1" cellpadding="10">
+    <h1>🗑️ Delete Imported Log Data</h1>
+
+    <table>
         <thead>
             <tr>
                 <th>File Name</th>
@@ -19,12 +45,14 @@
             {% for file in files %}
                 <tr>
                     <td>{{ file.filename }}</td>
-                    <td>{{ file.imported_at }}</td>
+                    <td>{{ file.imported_at|date:"Y-m-d H:i:s" }}</td>
                     <td>{{ file.logs.count }}</td>
                     <td>
                         <form method="post" action="{% url 'delete_file_data' file.id %}">
                             {% csrf_token %}
-                            <button type="submit" onclick="return confirm('Are you sure you want to delete this data?')">Delete</button>
+                            <button type="submit" onclick="return confirm('Are you sure you want to delete this data and its logs?')">
+                                Delete
+                            </button>
                         </form>
                     </td>
                 </tr>
