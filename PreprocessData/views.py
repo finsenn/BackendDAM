@@ -5,6 +5,8 @@ from .utils.api_response import api_response
 from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods
 import os
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import ImportedFile
 
 def run_log_processing(request):
     result = process_logs
@@ -23,3 +25,13 @@ def insert_db(request):
         http_code=result.get('http_code', 500),
         api_code=result.get('api_code', '')
     )
+
+def delete_page(request):
+    files = ImportedFile.objects.all().order_by('-imported_at')
+    return render(request, 'delete_interface.html', {'files': files})
+
+def delete_file_data(request, file_id):
+    file = get_object_or_404(ImportedFile, id=file_id)
+    file.logs.all().delete()  # delete related LogEntry records
+    file.delete()  # remove ImportedFile record itself
+    return redirect('delete_page')

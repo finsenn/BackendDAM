@@ -24,7 +24,8 @@ from myapp import views as views2
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-     path('process-logs/', views.process_logs, name='import-logs'),
-     path('insert-db', views.insert_db, name="insert-db")
-    
+    path('process-logs/', views.process_logs, name='import-logs'),
+    path('insert-db', views.insert_db, name="insert-db"),
+    path('delete/',views.delete_page,name='delete_page'),
+    path('delete/<int:file_id>/',views.delete_file_data, name='delete_file_data')
 ]

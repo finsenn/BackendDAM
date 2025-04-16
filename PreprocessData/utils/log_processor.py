@@ -5,7 +5,7 @@ import csv
 import os
 
 from datetime import datetime
-from PreprocessData.models import LogEntry  # Import your model
+from PreprocessData.models import LogEntry, ImportedFile # Import your model
 
 
 input_file = './CSVDAM/DAM_LOG_26Feb2025.csv'
@@ -83,9 +83,12 @@ def import_logs_to_db():
         df['Affected Rows'] = pd.to_numeric(df['Affected Rows'], errors='coerce').fillna(0).astype(int)
         df['Response Size'] = pd.to_numeric(df['Response Size'], errors='coerce').fillna(0).astype(int)
 
+        imported_file = ImportedFile.objects.create(filename=os.path.basename(input_file))
+
         inserted_count = 0
         for _, row in df.iterrows():
             LogEntry.objects.create(
+                imported_file=imported_file,
                 timestamp=row['Timestamp'],
                 user=row['User'],
                 event_type=row.get('Event Type', ''),
