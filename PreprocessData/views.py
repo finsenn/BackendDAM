@@ -32,6 +32,6 @@ def delete_page(request):
 
 def delete_file_data(request, file_id):
     file = get_object_or_404(ImportedFile, id=file_id)
-    file.logs.all().delete()  # delete related LogEntry records
-    file.delete()  # remove ImportedFile record itself
+    file.logs.all().delete()
+    file.delete()
     return redirect('delete_page')
