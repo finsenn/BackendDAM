@@ -2,7 +2,7 @@
 echo Starting Git Pull and Django Server...
 
 :: Change to your project directory - replace with your actual path
-cd /d C:\BackendDAM
+cd /d .
 
 :: Activate virtual environment
 :: call venv\Scripts\activate
