@@ -3,6 +3,7 @@ from .utils.log_processor import process_logs
 from .utils.log_processor import import_logs_to_db
 from .utils.api_response import api_response
 from django.http import HttpResponse
+from django.views.decorators.http import require_http_methods
 import os
 
 def run_log_processing(request):
