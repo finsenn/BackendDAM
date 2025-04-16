@@ -10,6 +10,7 @@ class ImportedFile(models.Model):
 
 class LogEntry(models.Model):
     imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True)
+    timestamp = models.DateTimeField(null=True, blank=True)  # ✅ Add this line
     user = models.CharField(max_length=255)
     event_type = models.CharField(max_length=100, null=True, blank=True)
     object_name = models.CharField(max_length=255, null=True, blank=True)
