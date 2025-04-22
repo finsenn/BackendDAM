@@ -8,12 +8,12 @@ from datetime import datetime
 from PreprocessData.models import LogEntry, ImportedFile # Import your model
 
 
-input_file = '../../CSVDAM/DAM_LOG_26Feb2025.csv'
+input_file = './CSVDAM/DAM_LOG_26Feb2025.csv'
 
 
 def process_logs():
     
-    output_dir = '../../CSVDAM'
+    output_dir = './CSVDAM'
 
     if not os.path.exists(input_file):
         return "❌ log.csv not found."
