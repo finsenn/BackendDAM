@@ -164,22 +164,19 @@ def import_logs_to_db():
             )
             inserted_count += 1
 
-            # ✅ Move and rename the input_file to an archive folder
-            archive_dir = './CSVDAM'
-            if not os.path.exists(archive_dir):
-                os.makedirs(archive_dir)
+        # ✅ Move and rename the input_file to an archive folder (after all insertions)
+        archive_dir = './CSVDAM/archive'
+        if not os.path.exists(archive_dir):
+            os.makedirs(archive_dir)
 
-            # Format current time for filename
-            timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            new_filename = f'DAM_LOG_{timestamp_str}.csv'
-            archived_path = os.path.join(archive_dir, new_filename)
+        timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        new_filename = f'DAM_LOG_{timestamp_str}.csv'
+        archived_path = os.path.join(archive_dir, new_filename)
 
-            try:
-                os.rename(input_file, archived_path)
-            except Exception as e:
-                print(f"⚠️ Failed to move and rename input file: {e}")
-
-            
+        try:
+            os.rename(input_file, archived_path)
+        except Exception as e:
+            print(f"⚠️ Failed to move and rename input file: {e}")
 
         return {
             'status': 'success',
@@ -197,3 +194,4 @@ def import_logs_to_db():
             'http_code': 500,
             'api_code': 'IMPORT_EXCEPTION'
         }
+
