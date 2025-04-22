@@ -15,6 +15,8 @@ def process_logs():
     
     output_dir = '../../CSVDAM'
 
+    return "test"
+
     if not os.path.exists(input_file):
         return "❌ log.csv not found."
 
