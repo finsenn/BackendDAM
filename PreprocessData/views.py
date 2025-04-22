@@ -10,7 +10,7 @@ from .models import ImportedFile
 
 def run_log_processing(request):
     result = process_logs
-    return HttpResponse(result)
+    return result
 # Create your views here.
 #a
 
