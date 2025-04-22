@@ -9,8 +9,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import ImportedFile
 
 def run_log_processing(request):
-    result = process_logs
-    return result
+    result = process_logs()
+    return HttpResponse(result)
 # Create your views here.
 #a
 
