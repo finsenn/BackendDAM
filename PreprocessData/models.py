@@ -20,3 +20,27 @@ class LogEntry(models.Model):
 
     def __str__(self):
         return f'{self.timestamp} - {self.user}'
+
+class TotalQueriesPerDay(models.Model):
+    date = models.DateField(unique=True)
+    total_queries = models.IntegerField()
+
+class TotalQueriesPerUserDay(models.Model):
+    date = models.DateField()
+    user = models.CharField(max_length=255)
+    total_queries = models.IntegerField()
+
+class TotalAffectedRows(models.Model):
+    date = models.DateField(unique=True)
+    total_affected_rows = models.IntegerField()
+
+class AffectedRowsPerUser(models.Model):
+    date = models.DateField()
+    user = models.CharField(max_length=255)
+    total_affected_rows = models.IntegerField()
+
+class SuspiciousQuery(models.Model):
+    timestamp = models.DateTimeField()
+    date = models.DateField()
+    user = models.CharField(max_length=255)
+    query = models.TextField()

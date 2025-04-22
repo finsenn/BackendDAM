@@ -7,12 +7,18 @@ import os
 from datetime import datetime
 from PreprocessData.models import LogEntry, ImportedFile # Import your model
 
+from PreprocessData.models import (
+    TotalQueriesPerDay,
+    TotalQueriesPerUserDay,
+    TotalAffectedRows,
+    AffectedRowsPerUser,
+    SuspiciousQuery
+)
 
 input_file = './CSVDAM/DAM_LOG_26Feb2025.csv'
 
 
 def process_logs():
-    
     output_dir = './CSVDAM'
 
     if not os.path.exists(input_file):
@@ -39,7 +45,7 @@ def process_logs():
     pd.DataFrame([{"Total Affected Rows": total_affected_rows}]).to_csv(f'{output_dir}/total_affected_rows.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
 
     # Affected rows per user
-    affected_rows_per_user = df.groupby('User')['Affected Rows'].sum().reset_index(name='Total Affected Rows')
+    affected_rows_per_user = df.groupby(['Date', 'User'])['Affected Rows'].sum().reset_index(name='Total Affected Rows')
     affected_rows_per_user.to_csv(f'{output_dir}/affected_rows_per_user.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
 
     # Suspicious queries
@@ -62,7 +68,50 @@ def process_logs():
     suspicious_queries = df[df['IsSuspicious']].copy()
     suspicious_queries[['Timestamp', 'User', 'Query']].to_csv(f'{output_dir}/suspicious_queries.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
 
-    return f"✅ All CSVs exported to the '{output_dir}' directory!"
+    # ✅ Insert into the database
+    dates = df['Date'].unique()
+
+    # Clean up old records for those dates (avoiding duplicates)
+    TotalQueriesPerDay.objects.filter(date__in=dates).delete()
+    TotalQueriesPerUserDay.objects.filter(date__in=dates).delete()
+    TotalAffectedRows.objects.filter(date__in=dates).delete()
+    AffectedRowsPerUser.objects.filter(date__in=dates).delete()
+    SuspiciousQuery.objects.filter(date__in=dates).delete()
+
+    # Insert Total Queries Per Day
+    TotalQueriesPerDay.objects.bulk_create([
+        TotalQueriesPerDay(date=row['Date'], total_queries=row['Total Queries'])
+        for _, row in total_queries_per_day.iterrows()
+    ])
+
+    # Insert Total Queries Per User Per Day
+    TotalQueriesPerUserDay.objects.bulk_create([
+        TotalQueriesPerUserDay(date=row['Date'], user=row['User'], total_queries=row['Total Queries'])
+        for _, row in total_queries_user_day.iterrows()
+    ])
+
+    # Insert Total Affected Rows (assuming it applies to all dates equally)
+    for date in dates:
+        TotalAffectedRows.objects.create(date=date, total_affected_rows=total_affected_rows)
+
+    # Insert Affected Rows Per User
+    AffectedRowsPerUser.objects.bulk_create([
+        AffectedRowsPerUser(date=row['Date'], user=row['User'], total_affected_rows=row['Total Affected Rows'])
+        for _, row in affected_rows_per_user.iterrows()
+    ])
+
+    # Insert Suspicious Queries
+    SuspiciousQuery.objects.bulk_create([
+        SuspiciousQuery(
+            timestamp=row['Timestamp'],
+            date=row['Timestamp'].date(),
+            user=row['User'],
+            query=row['Query']
+        )
+        for _, row in suspicious_queries.iterrows()
+    ])
+
+    return f"✅ All CSVs exported and data inserted into the database for {len(dates)} day(s)!"
 
 
 
