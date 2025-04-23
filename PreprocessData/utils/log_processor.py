@@ -162,14 +162,17 @@ def import_logs_to_db():
                 query=row.get('Query', ''),
             )
             inserted_count += 1
+        
+        process_logs()
 
         # ✅ Move and rename the input_file to an archive folder (after all insertions)
         archive_dir = './CSVDAM/archive'
         if not os.path.exists(archive_dir):
             os.makedirs(archive_dir)
 
-        timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        new_filename = f'DAM_LOG_{timestamp_str}.csv'
+        dates = df['Date'].unique()
+        new_filename = dates
+
         archived_path = os.path.join(archive_dir, new_filename)
 
         try:
