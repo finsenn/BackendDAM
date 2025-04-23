@@ -15,14 +15,11 @@ from PreprocessData.models import (
     SuspiciousQuery
 )
 
-input_file = '../../CSVDAM/input.csv'
+input_file = './CSVDAM/input.csv'
 
 
 def process_logs():
-    output_dir = '../../CSVDAM'
-    print("📍 Current working directory:", os.getcwd())
-    print("📍 Full input file path:", os.path.abspath(input_file))
-
+    output_dir = './CSVDAM'
 
     if not os.path.exists(input_file):
         return "❌ input.csv not found."
@@ -135,6 +132,9 @@ def process_logs():
 
 
 def import_logs_to_db():
+
+    print("📍 Current working directory:", os.getcwd())
+    print("📍 Full input file path:", os.path.abspath(input_file))
     if not os.path.exists(input_file):
         return {
             'status': 'error',
