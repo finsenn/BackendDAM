@@ -43,8 +43,7 @@ def process_logs():
     df['Date'] = df['Timestamp'].dt.date
     avg_size = df.groupby(['Date', 'User'])['Response Size'].mean().reset_index(name='Avg Response Size')
     avg_size.to_csv(f'{output_dir}/avg_response_size_user.csv', index=False)
-    return avg_size
-
+    
     # query type
     def classify_query(q):
         if pd.isna(q): return 'UNKNOWN'
