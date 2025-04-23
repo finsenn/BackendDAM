@@ -43,4 +43,18 @@ class SuspiciousQuery(models.Model):
     timestamp = models.DateTimeField()
     date = models.DateField()
     user = models.CharField(max_length=255)
-    query = models.TextField()
+    query = models.TextField()  
+
+class TopObject(models.Model):
+    object_name = models.CharField(max_length=255)
+    access_count = models.IntegerField()
+
+class AvgResponseSizePerUser(models.Model):
+    date = models.DateField()
+    user = models.CharField(max_length=255)
+    avg_response_size = models.FloatField()
+
+class QueryTypeDistribution(models.Model):
+    query_type = models.CharField(max_length=50)
+    count = models.IntegerField()
+

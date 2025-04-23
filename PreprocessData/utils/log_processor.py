@@ -12,7 +12,10 @@ from PreprocessData.models import (
     TotalQueriesPerUserDay,
     TotalAffectedRows,
     AffectedRowsPerUser,
-    SuspiciousQuery
+    SuspiciousQuery,
+    TopObject,
+    AvgResponseSizePerUser,
+    QueryTypeDistribution
 )
 
 input_file = './CSVDAM/input.csv'
@@ -31,6 +34,33 @@ def process_logs():
 
     if not os.path.exists(output_dir):
         return f"❌ The directory '{output_dir}' does not exist. Please create it manually."
+    
+    # Top objects by usage
+    top_objects = df.groupby('Object').size().reset_index(name='Access Count').sort_values(by='Access Count', ascending=False).head(10)
+    top_objects.to_csv(f'{output_dir}/top_objects.csv', index=False)
+
+    # Avg size
+    df['Date'] = df['Timestamp'].dt.date
+    avg_size = df.groupby(['Date', 'User'])['Response Size'].mean().reset_index(name='Avg Response Size')
+    avg_size.to_csv(f'{output_dir}/avg_response_size_user.csv', index=False)
+    return avg_size
+
+    # query type
+    def classify_query(q):
+        if pd.isna(q): return 'UNKNOWN'
+        q = q.lower()
+        if 'select' in q: return 'SELECT'
+        elif 'insert' in q: return 'INSERT'
+        elif 'truncate' in q: return 'TRUNCATE'
+        elif 'update' in q: return 'UPDATE'
+        elif 'delete' in q: return 'DELETE'
+        elif 'drop' in q: return 'DROP'
+        return 'OTHER'
+    
+    df['Query Type'] = df['Query'].apply(classify_query)
+    query_types = df['Query Type'].value_counts().reset_index()
+    query_types.columns = ['Query Type', 'Count']
+    query_types.to_csv(f'{output_dir}/query_type_distribution.csv', index=False)
 
     # Total queries per day
     total_queries_per_day = df.groupby('Date').size().reset_index(name='Total Queries')
@@ -47,6 +77,10 @@ def process_logs():
     # Affected rows per user
     affected_rows_per_user = df.groupby(['Date', 'User'])['Affected Rows'].sum().reset_index(name='Total Affected Rows')
     affected_rows_per_user.to_csv(f'{output_dir}/affected_rows_per_user.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
+
+    # Response time
+    top_response_size = df.sort_values(by='Response Size', ascending=False).head(20)
+    top_response_size.to_csv(f'{output_dir}/top_response_size_queries.csv', index=False)
 
     # Suspicious queries
     suspicious_keywords = [
@@ -111,13 +145,39 @@ def process_logs():
         for _, row in suspicious_queries.iterrows()
     ])
 
+    # Insert Top Object
+    TopObject.objects.all().delete()
+    TopObject.objects.bulk_create([
+        TopObject(object_name=row['Object'], access_count=row['Access Count'])
+        for _, row in top_objects.iterrows()
+    ])
+
+    # avg size
+    AvgResponseSizePerUser.objects.filter(date__in=avg_size['Date'].unique()).delete()
+    AvgResponseSizePerUser.objects.bulk_create([
+        AvgResponseSizePerUser(date=row['Date'], user=row['User'], avg_response_size=row['Avg Response Size'])
+        for _, row in avg_size.iterrows()
+    ])
+
+    # query type
+    QueryTypeDistribution.objects.all().delete()
+    QueryTypeDistribution.objects.bulk_create([
+        QueryTypeDistribution(query_type=row['Query Type'], count=row['Count'])
+        for _, row in query_types.iterrows()
+    ])
+
     #delete the csv after inserted to query
     generated_files = [
         'total_queries_per_day.csv',
         'total_queries_user_day.csv',
         'total_affected_rows.csv',
         'affected_rows_per_user.csv',
-        'suspicious_queries.csv'
+        'suspicious_queries.csv',
+        'top_objects.csv',
+        'avg_response_size_user.csv',
+        'query_type_distribution.csv',
+
+
     ]
 
     for file_name in generated_files:
