@@ -130,20 +130,7 @@ def process_logs():
     return f"✅ All CSVs exported and data inserted into the database for {len(dates)} day(s)!"
 
 
-
 def import_logs_to_db():
-
-    print("📍 Current working directory:", os.getcwd())
-    print("📍 Full input file path:", os.path.abspath(input_file))
-
-    target_dir = './CSVDAM'
-    if os.path.exists(target_dir):
-        print(f"📂 Contents of {target_dir}:")
-        for f in os.listdir(target_dir):
-            print("-", f)
-    else:
-        print(f"❌ Directory '{target_dir}' does not exist.")
-
     if not os.path.exists(input_file):
         return {
             'status': 'error',
@@ -176,8 +163,19 @@ def import_logs_to_db():
             )
             inserted_count += 1
 
+        # ✅ Move and rename the input_file to an archive folder (after all insertions)
+        archive_dir = './CSVDAM/archive'
+        if not os.path.exists(archive_dir):
+            os.makedirs(archive_dir)
 
-            
+        timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        new_filename = f'DAM_LOG_{timestamp_str}.csv'
+        archived_path = os.path.join(archive_dir, new_filename)
+
+        try:
+            os.rename(input_file, archived_path)
+        except Exception as e:
+            print(f"⚠️ Failed to move and rename input file: {e}")
 
         return {
             'status': 'success',
