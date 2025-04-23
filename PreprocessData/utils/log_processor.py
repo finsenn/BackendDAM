@@ -15,14 +15,14 @@ from PreprocessData.models import (
     SuspiciousQuery
 )
 
-input_file = './CSVDAM/input.csv'
+input_file = '../../CSVDAM/input.csv'
 
 
 def process_logs():
-    output_dir = './CSVDAM'
+    output_dir = '../../CSVDAM'
 
     if not os.path.exists(input_file):
-        return "❌ log.csv not found."
+        return "❌ input.csv not found."
 
     df = pd.read_csv(input_file)
     df['Timestamp'] = pd.to_datetime(df['Time Group - 1 Minute'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce')
