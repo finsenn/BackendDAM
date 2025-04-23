@@ -135,6 +135,15 @@ def import_logs_to_db():
 
     print("📍 Current working directory:", os.getcwd())
     print("📍 Full input file path:", os.path.abspath(input_file))
+
+    target_dir = './CSVDAM'
+    if os.path.exists(target_dir):
+        print(f"📂 Contents of {target_dir}:")
+        for f in os.listdir(target_dir):
+            print("-", f)
+    else:
+        print(f"❌ Directory '{target_dir}' does not exist.")
+
     if not os.path.exists(input_file):
         return {
             'status': 'error',
