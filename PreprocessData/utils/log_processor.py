@@ -170,6 +170,7 @@ def import_logs_to_db():
         if not os.path.exists(archive_dir):
             os.makedirs(archive_dir)
 
+        df['Date'] = df['Timestamp'].dt.date
         dates = df['Date'].unique()
         new_filename = dates
 
