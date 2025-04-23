@@ -20,7 +20,7 @@ input_file = './CSVDAM/input.csv'
 
 def process_logs():
     output_dir = './CSVDAM'
-
+    print("PROCESS LOG FUNCTION CALLED")
     if not os.path.exists(input_file):
         return "❌ input.csv not found."
 
@@ -163,7 +163,10 @@ def import_logs_to_db():
             )
             inserted_count += 1
         
-        process_logs()
+
+        process_result = process_logs()
+        print(f"[process_logs] result: {process_result}")
+
 
         # ✅ Move and rename the input_file to an archive folder (after all insertions)
         archive_dir = './CSVDAM/archive'
@@ -172,7 +175,7 @@ def import_logs_to_db():
 
         df['Date'] = df['Timestamp'].dt.date
         dates = df['Date'].unique()
-        new_filename = dates
+        new_filename = f"input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
 
         archived_path = os.path.join(archive_dir, new_filename)
 
