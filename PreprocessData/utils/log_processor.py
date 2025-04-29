@@ -32,16 +32,9 @@ def process_logs():
 
     if not os.path.exists(output_dir):
         return f"❌ The directory '{output_dir}' does not exist. Please create it manually."
-    
-    # Top objects by usage
-    top_objects = df.groupby('Object').size().reset_index(name='Access Count').sort_values(by='Access Count', ascending=False).head(10)
-    top_objects.to_csv(f'{output_dir}/top_objects.csv', index=False)
 
-    # Avg size
-    df['Date'] = df['Timestamp'].dt.date
-    avg_size = df.groupby(['Date', 'User'])['Response Size'].mean().reset_index(name='Avg Response Size')
-    avg_size.to_csv(f'{output_dir}/avg_response_size_user.csv', index=False)
-    
+
+
     # query type
     def classify_query(q):
         if pd.isna(q): return 'UNKNOWN'
@@ -145,12 +138,7 @@ def process_logs():
         'total_queries_user_day.csv',
         'total_affected_rows.csv',
         'affected_rows_per_user.csv',
-        'suspicious_queries.csv',
-        'top_objects.csv',
-        'avg_response_size_user.csv',
-        'query_type_distribution.csv',
-
-
+        'suspicious_queries.csv'
     ]
 
     for file_name in generated_files:
