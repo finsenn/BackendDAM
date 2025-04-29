@@ -50,7 +50,7 @@ def process_logs():
     df['Query Type'] = df['Query'].apply(classify_query)
     query_types = df['Query Type'].value_counts().reset_index()
     query_types.columns = ['Query Type', 'Count']
-    query_types.to_csv(f'{output_dir}/query_type_distribution.csv', index=False)
+
 
     # Total queries per day
     total_queries_per_day = df.groupby('Date').size().reset_index(name='Total Queries')
