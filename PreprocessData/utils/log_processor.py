@@ -77,10 +77,6 @@ def process_logs():
     affected_rows_per_user = df.groupby(['Date', 'User'])['Affected Rows'].sum().reset_index(name='Total Affected Rows')
     affected_rows_per_user.to_csv(f'{output_dir}/affected_rows_per_user.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
 
-    # Response time
-    top_response_size = df.sort_values(by='Response Size', ascending=False).head(20)
-    top_response_size.to_csv(f'{output_dir}/top_response_size_queries.csv', index=False)
-
     # Suspicious queries
     suspicious_keywords = [
         'truncate',
@@ -144,27 +140,7 @@ def process_logs():
         for _, row in suspicious_queries.iterrows()
     ])
 
-    # Insert Top Object
-    TopObject.objects.all().delete()
-    TopObject.objects.bulk_create([
-        TopObject(object_name=row['Object'], access_count=row['Access Count'])
-        for _, row in top_objects.iterrows()
-    ])
-
-    # avg size
-    AvgResponseSizePerUser.objects.filter(date__in=avg_size['Date'].unique()).delete()
-    AvgResponseSizePerUser.objects.bulk_create([
-        AvgResponseSizePerUser(date=row['Date'], user=row['User'], avg_response_size=row['Avg Response Size'])
-        for _, row in avg_size.iterrows()
-    ])
-
-    # query type
-    QueryTypeDistribution.objects.all().delete()
-    QueryTypeDistribution.objects.bulk_create([
-        QueryTypeDistribution(query_type=row['Query Type'], count=row['Count'])
-        for _, row in query_types.iterrows()
-    ])
-
+   
     #delete the csv after inserted to query
     generated_files = [
         'total_queries_per_day.csv',
