@@ -13,9 +13,7 @@ from PreprocessData.models import (
     TotalAffectedRows,
     AffectedRowsPerUser,
     SuspiciousQuery,
-    TopObject,
-    AvgResponseSizePerUser,
-    QueryTypeDistribution
+
 )
 
 input_file = './CSVDAM/input.csv'
