@@ -87,7 +87,9 @@ class SuspiciousQuery(models.Model):
     imported_file = models.ForeignKey(
         ImportedFile,
         on_delete=models.CASCADE,
-        related_name='suspicious_queries'
+        related_name='suspicious_queries',
+        null=True,
+        blank=True
     )
     timestamp = models.DateTimeField(null=True, blank=True)
     date = models.DateField(null=True, blank=True)
