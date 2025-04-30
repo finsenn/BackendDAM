@@ -45,3 +45,7 @@ class SuspiciousQuery(models.Model):
     user = models.CharField(max_length=255)
     query = models.TextField()  
 
+class HourlyQueryVolume(models.Model):
+    date = models.DateField()
+    hour = models.IntegerField()
+    query_count = models.IntegerField()

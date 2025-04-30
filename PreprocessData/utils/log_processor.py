@@ -13,7 +13,7 @@ from PreprocessData.models import (
     TotalAffectedRows,
     AffectedRowsPerUser,
     SuspiciousQuery,
-
+    HourlyQueryVolume,
 )
 
 input_file = './CSVDAM/input.csv'
@@ -88,6 +88,22 @@ def process_logs():
     suspicious_queries = df[df['IsSuspicious']].copy()
     suspicious_queries[['Timestamp', 'User', 'Query']].to_csv(f'{output_dir}/suspicious_queries.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
 
+    #Hourly Query
+    df['Hour'] = df['Timestamp'].dt.hour
+    hourly_query_volume = (
+        df.groupby(['Date', 'Hour'])
+        .size()
+        .reset_index(name='Query Count')
+    )
+    
+    hourly_query_volume.to_csv(
+    f'{output_dir}/hourly_query_volume.csv',
+    index=False,
+    quoting=csv.QUOTE_MINIMAL,
+    quotechar='"'
+)
+
+
     # ✅ Insert into the database
     dates = df['Date'].unique()
 
@@ -97,6 +113,7 @@ def process_logs():
     TotalAffectedRows.objects.filter(date__in=dates).delete()
     AffectedRowsPerUser.objects.filter(date__in=dates).delete()
     SuspiciousQuery.objects.filter(date__in=dates).delete()
+    HourlyQueryVolume.objects.filter(date__in=dates).delete()
 
     # Insert Total Queries Per Day
     TotalQueriesPerDay.objects.bulk_create([
@@ -131,6 +148,14 @@ def process_logs():
         for _, row in suspicious_queries.iterrows()
     ])
 
+    #Insert Hourly Query 
+    HourlyQueryVolume.objects.bulk_create([
+        HourlyQueryVolume(date=row['Date'], hour=row['Hour'], query_count=row['Query Count'])
+        for _, row in hourly_query_volume.iterrows()
+    ])
+
+    
+
    
     #delete the csv after inserted to query
     generated_files = [
@@ -138,7 +163,8 @@ def process_logs():
         'total_queries_user_day.csv',
         'total_affected_rows.csv',
         'affected_rows_per_user.csv',
-        'suspicious_queries.csv'
+        'suspicious_queries.csv',
+        'hourly_query_volume.csv'
     ]
 
     for file_name in generated_files:
