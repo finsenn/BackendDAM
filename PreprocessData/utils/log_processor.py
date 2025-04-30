@@ -5,9 +5,9 @@ import csv
 import os
 
 from datetime import datetime
-from PreprocessData.models import LogEntry, ImportedFile # Import your model
-
 from PreprocessData.models import (
+    LogEntry,
+    ImportedFile,
     TotalQueriesPerDay,
     TotalQueriesPerUserDay,
     TotalAffectedRows,
@@ -19,169 +19,133 @@ from PreprocessData.models import (
 input_file = './CSVDAM/input.csv'
 
 
-def process_logs():
+def process_logs(imported_file):
     output_dir = './CSVDAM'
-    print("PROCESS LOG FUNCTION CALLED")
+    print("PROCESS LOG FUNCTION CALLED for file ID", imported_file.id)
+
     if not os.path.exists(input_file):
         return "❌ input.csv not found."
 
     df = pd.read_csv(input_file)
-    df['Timestamp'] = pd.to_datetime(df['Time Group - 1 Minute'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce')
+    df['Timestamp'] = pd.to_datetime(
+        df['Time Group - 1 Minute'],
+        format='%m/%d/%Y %I:%M:%S %p',
+        errors='coerce'
+    )
     df['Date'] = df['Timestamp'].dt.date
-    df['Affected Rows'] = pd.to_numeric(df['Affected Rows'], errors='coerce').fillna(0).astype(int)
+    df['Affected Rows'] = pd.to_numeric(
+        df['Affected Rows'], errors='coerce'
+    ).fillna(0).astype(int)
 
     if not os.path.exists(output_dir):
         return f"❌ The directory '{output_dir}' does not exist. Please create it manually."
 
-
-
-    # query type
+    # classify query types
     def classify_query(q):
-        if pd.isna(q): return 'UNKNOWN'
-        q = q.lower()
-        if 'select' in q: return 'SELECT'
-        elif 'insert' in q: return 'INSERT'
-        elif 'truncate' in q: return 'TRUNCATE'
-        elif 'update' in q: return 'UPDATE'
-        elif 'delete' in q: return 'DELETE'
-        elif 'drop' in q: return 'DROP'
+        if pd.isna(q):
+            return 'UNKNOWN'
+        ql = q.lower()
+        if 'select' in ql:
+            return 'SELECT'
+        elif 'insert' in ql:
+            return 'INSERT'
+        elif 'truncate' in ql:
+            return 'TRUNCATE'
+        elif 'update' in ql:
+            return 'UPDATE'
+        elif 'delete' in ql:
+            return 'DELETE'
+        elif 'drop' in ql:
+            return 'DROP'
         return 'OTHER'
-    
+
     df['Query Type'] = df['Query'].apply(classify_query)
-    query_types = df['Query Type'].value_counts().reset_index()
-    query_types.columns = ['Query Type', 'Count']
 
-
-    # Total queries per day
+    # prepare summaries
     total_queries_per_day = df.groupby('Date').size().reset_index(name='Total Queries')
-    total_queries_per_day.to_csv(f'{output_dir}/total_queries_per_day.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
-
-    # Total queries per user per day
     total_queries_user_day = df.groupby(['Date', 'User']).size().reset_index(name='Total Queries')
-    total_queries_user_day.to_csv(f'{output_dir}/total_queries_user_day.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
-
-    # Total affected rows
     total_affected_rows = df['Affected Rows'].sum()
-    pd.DataFrame([{"Total Affected Rows": total_affected_rows}]).to_csv(f'{output_dir}/total_affected_rows.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
-
-    # Affected rows per user
-    affected_rows_per_user = df.groupby(['Date', 'User'])['Affected Rows'].sum().reset_index(name='Total Affected Rows')
-    affected_rows_per_user.to_csv(f'{output_dir}/affected_rows_per_user.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
-
-    # Suspicious queries
+    affected_rows_per_user = df.groupby(['Date', 'User'])['Affected Rows']
+                              .sum().reset_index(name='Total Affected Rows')
     suspicious_keywords = [
-        'truncate',
-        'drop',
-        'delete',
-        'xp_cmdshell',
-        'sp_executesql',
-        'insert bulk',
-        'with\\(nolock\\)'
+        'truncate','drop','delete','xp_cmdshell',
+        'sp_executesql','insert bulk','with\(nolock\)'
     ]
-
-    def check_suspicious(query):
-        if pd.isna(query):
-            return False
-        return any(re.search(pattern, query, re.IGNORECASE) for pattern in suspicious_keywords)
-
-    df['IsSuspicious'] = df['Query'].apply(check_suspicious)
-    suspicious_queries = df[df['IsSuspicious']].copy()
-    suspicious_queries[['Timestamp', 'User', 'Query']].to_csv(f'{output_dir}/suspicious_queries.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
-
-        # Ensure Date has no time component
-    df['Date'] = df['Timestamp'].dt.date  # Just the date, like 2025-02-25
-
-    # Extract hour from the timestamp
+    df['IsSuspicious'] = df['Query'].apply(
+        lambda q: any(re.search(pat, str(q), re.IGNORECASE) for pat in suspicious_keywords)
+    )
+    suspicious_queries = df[df['IsSuspicious']]
     df['Hour'] = df['Timestamp'].dt.hour
+    hourly_query_volume = df.groupby(['Date', 'Hour']).size().reset_index(name='Query Count')
 
-    # Group by Date and Hour
-    hourly_query_volume = (
-        df.groupby(['Date', 'Hour'])
-        .size()
-        .reset_index(name='Query Count')
-    )
+    # remove old records for this file
+    TotalQueriesPerDay.objects.filter(imported_file=imported_file).delete()
+    TotalQueriesPerUserDay.objects.filter(imported_file=imported_file).delete()
+    TotalAffectedRows.objects.filter(imported_file=imported_file).delete()
+    AffectedRowsPerUser.objects.filter(imported_file=imported_file).delete()
+    SuspiciousQuery.objects.filter(imported_file=imported_file).delete()
+    HourlyQueryVolume.objects.filter(imported_file=imported_file).delete()
 
-    # Export to CSV
-    hourly_query_volume.to_csv(
-        f'{output_dir}/hourly_query_volume.csv',
-        index=False,
-        quoting=csv.QUOTE_MINIMAL,
-        quotechar='"'
-    )
-
-
-
-    # ✅ Insert into the database
-    dates = df['Date'].unique()
-
-    # Clean up old records for those dates (avoiding duplicates)
-    TotalQueriesPerDay.objects.filter(date__in=dates).delete()
-    TotalQueriesPerUserDay.objects.filter(date__in=dates).delete()
-    TotalAffectedRows.objects.filter(date__in=dates).delete()
-    AffectedRowsPerUser.objects.filter(date__in=dates).delete()
-    SuspiciousQuery.objects.filter(date__in=dates).delete()
-    HourlyQueryVolume.objects.filter(date__in=dates).delete()
-
-    # Insert Total Queries Per Day
+    # insert new summaries with FK
     TotalQueriesPerDay.objects.bulk_create([
-        TotalQueriesPerDay(date=row['Date'], total_queries=row['Total Queries'])
-        for _, row in total_queries_per_day.iterrows()
+        TotalQueriesPerDay(
+            imported_file=imported_file,
+            date=row['Date'],
+            total_queries=row['Total Queries']
+        ) for _, row in total_queries_per_day.iterrows()
     ])
-
-    # Insert Total Queries Per User Per Day
     TotalQueriesPerUserDay.objects.bulk_create([
-        TotalQueriesPerUserDay(date=row['Date'], user=row['User'], total_queries=row['Total Queries'])
-        for _, row in total_queries_user_day.iterrows()
+        TotalQueriesPerUserDay(
+            imported_file=imported_file,
+            date=row['Date'],
+            user=row['User'],
+            total_queries=row['Total Queries']
+        ) for _, row in total_queries_user_day.iterrows()
     ])
-
-    # Insert Total Affected Rows (assuming it applies to all dates equally)
-    for date in dates:
-        TotalAffectedRows.objects.create(date=date, total_affected_rows=total_affected_rows)
-
-    # Insert Affected Rows Per User
+    for date in total_queries_per_day['Date'].unique():
+        TotalAffectedRows.objects.create(
+            imported_file=imported_file,
+            date=date,
+            total_affected_rows=total_affected_rows
+        )
     AffectedRowsPerUser.objects.bulk_create([
-        AffectedRowsPerUser(date=row['Date'], user=row['User'], total_affected_rows=row['Total Affected Rows'])
-        for _, row in affected_rows_per_user.iterrows()
+        AffectedRowsPerUser(
+            imported_file=imported_file,
+            date=row['Date'],
+            user=row['User'],
+            total_affected_rows=row['Total Affected Rows']
+        ) for _, row in affected_rows_per_user.iterrows()
     ])
-
-    # Insert Suspicious Queries
     SuspiciousQuery.objects.bulk_create([
         SuspiciousQuery(
+            imported_file=imported_file,
             timestamp=row['Timestamp'],
             date=row['Timestamp'].date(),
             user=row['User'],
             query=row['Query']
-        )
-        for _, row in suspicious_queries.iterrows()
+        ) for _, row in suspicious_queries.iterrows()
     ])
-
-    #Insert Hourly Query 
     HourlyQueryVolume.objects.bulk_create([
-        HourlyQueryVolume(date=row['Date'], hour=row['Hour'], query_count=row['Query Count'])
-        for _, row in hourly_query_volume.iterrows()
+        HourlyQueryVolume(
+            imported_file=imported_file,
+            date=row['Date'],
+            hour=row['Hour'],
+            query_count=row['Query Count']
+        ) for _, row in hourly_query_volume.iterrows()
     ])
 
-    
-
-   
-    #delete the csv after inserted to query
-    generated_files = [
-        'total_queries_per_day.csv',
-        'total_queries_user_day.csv',
-        'total_affected_rows.csv',
-        'affected_rows_per_user.csv',
-        'suspicious_queries.csv',
-        'hourly_query_volume.csv'
-    ]
-
-    for file_name in generated_files:
+    # cleanup exports
+    for fname in [
+        'total_queries_per_day.csv','total_queries_user_day.csv',
+        'total_affected_rows.csv','affected_rows_per_user.csv',
+        'suspicious_queries.csv','hourly_query_volume.csv'
+    ]:
         try:
-            os.remove(os.path.join(output_dir, file_name))
-        except Exception as e:
-            print(f"⚠️ Failed to delete {file_name}: {e}")
+            os.remove(os.path.join(output_dir, fname))
+        except OSError:
+            pass
 
-
-    return f"✅ All CSVs exported and data inserted into the database for {len(dates)} day(s)!"
+    return f"✅ Data processed for file ID {imported_file.id}!"
 
 
 def import_logs_to_db():
@@ -193,11 +157,13 @@ def import_logs_to_db():
             'http_code': 404,
             'api_code': 'IMPORT_FILE_NOT_FOUND'
         }
-
     try:
         df = pd.read_csv(input_file)
-
-        df['Timestamp'] = pd.to_datetime(df['Time Group - 1 Minute'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce')
+        df['Timestamp'] = pd.to_datetime(
+            df['Time Group - 1 Minute'],
+            format='%m/%d/%Y %I:%M:%S %p',
+            errors='coerce'
+        )
         df['Affected Rows'] = pd.to_numeric(df['Affected Rows'], errors='coerce').fillna(0).astype(int)
         df['Response Size'] = pd.to_numeric(df['Response Size'], errors='coerce').fillna(0).astype(int)
 
@@ -216,40 +182,27 @@ def import_logs_to_db():
                 query=row.get('Query', ''),
             )
             inserted_count += 1
-        
 
-        process_result = process_logs()
-        print(f"[process_logs] result: {process_result}")
+        # now pass the created file into processing
+        process_logs(imported_file)
 
-
-        # ✅ Move and rename the input_file to an archive folder (after all insertions)
+        # archive the input file
         archive_dir = './CSVDAM/archive'
-        if not os.path.exists(archive_dir):
-            os.makedirs(archive_dir)
-
-        df['Date'] = df['Timestamp'].dt.date
-        dates = df['Date'].unique()
-        new_filename = f"input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-
-        archived_path = os.path.join(archive_dir, new_filename)
-
-        try:
-            os.rename(input_file, archived_path)
-        except Exception as e:
-            print(f"⚠️ Failed to move and rename input file: {e}")
+        os.makedirs(archive_dir, exist_ok=True)
+        new_name = f"input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        os.rename(input_file, os.path.join(archive_dir, new_name))
 
         return {
             'status': 'success',
-            'message': f"✅ {inserted_count} rows inserted into database",
+            'message': f"✅ {inserted_count} rows inserted",
             'inserted_rows': inserted_count,
             'http_code': 200,
             'api_code': 'IMPORT_SUCCESS'
         }
-
     except Exception as e:
         return {
             'status': 'error',
-            'message': f"❌ Import failed: {str(e)}",
+            'message': f"❌ Import failed: {e}",
             'inserted_rows': 0,
             'http_code': 500,
             'api_code': 'IMPORT_EXCEPTION'
