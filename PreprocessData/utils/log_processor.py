@@ -88,20 +88,27 @@ def process_logs():
     suspicious_queries = df[df['IsSuspicious']].copy()
     suspicious_queries[['Timestamp', 'User', 'Query']].to_csv(f'{output_dir}/suspicious_queries.csv', index=False, quoting=csv.QUOTE_MINIMAL, quotechar='"')
 
-    #Hourly Query
+        # Ensure Date has no time component
+    df['Date'] = df['Timestamp'].dt.date  # Just the date, like 2025-02-25
+
+    # Extract hour from the timestamp
     df['Hour'] = df['Timestamp'].dt.hour
+
+    # Group by Date and Hour
     hourly_query_volume = (
         df.groupby(['Date', 'Hour'])
         .size()
         .reset_index(name='Query Count')
     )
-    
+
+    # Export to CSV
     hourly_query_volume.to_csv(
-    f'{output_dir}/hourly_query_volume.csv',
-    index=False,
-    quoting=csv.QUOTE_MINIMAL,
-    quotechar='"'
-)
+        f'{output_dir}/hourly_query_volume.csv',
+        index=False,
+        quoting=csv.QUOTE_MINIMAL,
+        quotechar='"'
+    )
+
 
 
     # ✅ Insert into the database
