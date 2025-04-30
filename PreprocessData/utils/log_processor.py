@@ -33,9 +33,11 @@ def process_logs(imported_file):
         errors='coerce'
     )
     df['Date'] = df['Timestamp'].dt.date
-    df['Affected Rows'] = pd.to_numeric(
-        df['Affected Rows'], errors='coerce'
-    ).fillna(0).astype(int)
+    df['Affected Rows'] = (
+        pd.to_numeric(df['Affected Rows'], errors='coerce')
+        .fillna(0)
+        .astype(int)
+    )
 
     if not os.path.exists(output_dir):
         return f"❌ The directory '{output_dir}' does not exist. Please create it manually."
@@ -62,21 +64,39 @@ def process_logs(imported_file):
     df['Query Type'] = df['Query'].apply(classify_query)
 
     # prepare summaries
-    total_queries_per_day = df.groupby('Date').size().reset_index(name='Total Queries')
-    total_queries_user_day = df.groupby(['Date', 'User']).size().reset_index(name='Total Queries')
+    total_queries_per_day = (
+        df.groupby('Date')
+        .size()
+        .reset_index(name='Total Queries')
+    )
+    total_queries_user_day = (
+        df.groupby(['Date', 'User'])
+        .size()
+        .reset_index(name='Total Queries')
+    )
     total_affected_rows = df['Affected Rows'].sum()
-    affected_rows_per_user = df.groupby(['Date', 'User'])['Affected Rows']
-                              .sum().reset_index(name='Total Affected Rows')
+    affected_rows_per_user = (
+        df.groupby(['Date', 'User'])['Affected Rows']
+        .sum()
+        .reset_index(name='Total Affected Rows')
+    )
     suspicious_keywords = [
         'truncate','drop','delete','xp_cmdshell',
         'sp_executesql','insert bulk','with\(nolock\)'
     ]
     df['IsSuspicious'] = df['Query'].apply(
-        lambda q: any(re.search(pat, str(q), re.IGNORECASE) for pat in suspicious_keywords)
+        lambda q: any(
+            re.search(pat, str(q), re.IGNORECASE)
+            for pat in suspicious_keywords
+        )
     )
     suspicious_queries = df[df['IsSuspicious']]
     df['Hour'] = df['Timestamp'].dt.hour
-    hourly_query_volume = df.groupby(['Date', 'Hour']).size().reset_index(name='Query Count')
+    hourly_query_volume = (
+        df.groupby(['Date', 'Hour'])
+        .size()
+        .reset_index(name='Query Count')
+    )
 
     # remove old records for this file
     TotalQueriesPerDay.objects.filter(imported_file=imported_file).delete()
@@ -92,7 +112,8 @@ def process_logs(imported_file):
             imported_file=imported_file,
             date=row['Date'],
             total_queries=row['Total Queries']
-        ) for _, row in total_queries_per_day.iterrows()
+        )
+        for _, row in total_queries_per_day.iterrows()
     ])
     TotalQueriesPerUserDay.objects.bulk_create([
         TotalQueriesPerUserDay(
@@ -100,7 +121,8 @@ def process_logs(imported_file):
             date=row['Date'],
             user=row['User'],
             total_queries=row['Total Queries']
-        ) for _, row in total_queries_user_day.iterrows()
+        )
+        for _, row in total_queries_user_day.iterrows()
     ])
     for date in total_queries_per_day['Date'].unique():
         TotalAffectedRows.objects.create(
@@ -114,7 +136,8 @@ def process_logs(imported_file):
             date=row['Date'],
             user=row['User'],
             total_affected_rows=row['Total Affected Rows']
-        ) for _, row in affected_rows_per_user.iterrows()
+        )
+        for _, row in affected_rows_per_user.iterrows()
     ])
     SuspiciousQuery.objects.bulk_create([
         SuspiciousQuery(
@@ -123,7 +146,8 @@ def process_logs(imported_file):
             date=row['Timestamp'].date(),
             user=row['User'],
             query=row['Query']
-        ) for _, row in suspicious_queries.iterrows()
+        )
+        for _, row in suspicious_queries.iterrows()
     ])
     HourlyQueryVolume.objects.bulk_create([
         HourlyQueryVolume(
@@ -131,14 +155,15 @@ def process_logs(imported_file):
             date=row['Date'],
             hour=row['Hour'],
             query_count=row['Query Count']
-        ) for _, row in hourly_query_volume.iterrows()
+        )
+        for _, row in hourly_query_volume.iterrows()
     ])
 
     # cleanup exports
     for fname in [
-        'total_queries_per_day.csv','total_queries_user_day.csv',
-        'total_affected_rows.csv','affected_rows_per_user.csv',
-        'suspicious_queries.csv','hourly_query_volume.csv'
+        'total_queries_per_day.csv', 'total_queries_user_day.csv',
+        'total_affected_rows.csv', 'affected_rows_per_user.csv',
+        'suspicious_queries.csv', 'hourly_query_volume.csv'
     ]:
         try:
             os.remove(os.path.join(output_dir, fname))
@@ -164,10 +189,16 @@ def import_logs_to_db():
             format='%m/%d/%Y %I:%M:%S %p',
             errors='coerce'
         )
-        df['Affected Rows'] = pd.to_numeric(df['Affected Rows'], errors='coerce').fillna(0).astype(int)
-        df['Response Size'] = pd.to_numeric(df['Response Size'], errors='coerce').fillna(0).astype(int)
+        df['Affected Rows'] = pd.to_numeric(
+            df['Affected Rows'], errors='coerce'
+        ).fillna(0).astype(int)
+        df['Response Size'] = pd.to_numeric(
+            df['Response Size'], errors='coerce'
+        ).fillna(0).astype(int)
 
-        imported_file = ImportedFile.objects.create(filename=os.path.basename(input_file))
+        imported_file = ImportedFile.objects.create(
+            filename=os.path.basename(input_file)
+        )
 
         inserted_count = 0
         for _, row in df.iterrows():
