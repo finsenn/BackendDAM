@@ -24,35 +24,29 @@ class LogEntry(models.Model):
 class TotalQueriesPerDay(models.Model):
     date = models.DateField(unique=True)
     total_queries = models.IntegerField()
-    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True, related_name='total_queries_per_day_entries')
+    
 
 class TotalQueriesPerUserDay(models.Model):
     date = models.DateField()
     user = models.CharField(max_length=255)
-    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True, related_name='total_queries_per_user_day_entries')
+    total_queries = models.IntegerField()
 
 class TotalAffectedRows(models.Model):
     date = models.DateField(unique=True)
     total_affected_rows = models.IntegerField()
-    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True, related_name='total_affected_rows_entries')
-
 
 class AffectedRowsPerUser(models.Model):
     date = models.DateField()
     user = models.CharField(max_length=255)
     total_affected_rows = models.IntegerField()
-    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True, related_name='affected_rows_per_user_entries')
-    
+
 class SuspiciousQuery(models.Model):
     timestamp = models.DateTimeField()
     date = models.DateField()
     user = models.CharField(max_length=255)
-    query = models.TextField()
-    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True, related_name='suspicious_queries')  
+    query = models.TextField()  
 
 class HourlyQueryVolume(models.Model):
     date = models.DateField()
     hour = models.IntegerField()
     query_count = models.IntegerField()
-    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True, related_name='hourly_query_volume_entries')
-    
