@@ -20,33 +20,34 @@ class LogEntry(models.Model):
 
     def __str__(self):
         return f'{self.timestamp} - {self.user}'
-
+    
 class TotalQueriesPerDay(models.Model):
-    date = models.DateField(unique=True)
+    date = models.DateField(unique=True, null=True, blank=True)
     total_queries = models.IntegerField()
     
 
 class TotalQueriesPerUserDay(models.Model):
-    date = models.DateField()
+    date = models.DateField(unique=True, null=True, blank=True)
     user = models.CharField(max_length=255)
-    total_queries = models.IntegerField()
+    total_queries = models.IntegerField(default=0)
+    
 
 class TotalAffectedRows(models.Model):
-    date = models.DateField(unique=True)
-    total_affected_rows = models.IntegerField()
+    date = models.DateField(unique=True, null=True, blank=True)
+    total_affected_rows = models.IntegerField(default=0)
 
 class AffectedRowsPerUser(models.Model):
-    date = models.DateField()
+    date = models.DateField(unique=True, null=True, blank=True)
     user = models.CharField(max_length=255)
-    total_affected_rows = models.IntegerField()
+    total_affected_rows = models.IntegerField(default=0)
 
 class SuspiciousQuery(models.Model):
-    timestamp = models.DateTimeField()
-    date = models.DateField()
+    timestamp = models.DateTimeField(default=0)
+    date = models.DateField(unique=True, null=True, blank=True)
     user = models.CharField(max_length=255)
-    query = models.TextField()  
+    query = models.TextField(default=0)  
 
 class HourlyQueryVolume(models.Model):
-    date = models.DateField()
-    hour = models.IntegerField()
-    query_count = models.IntegerField()
+    date = models.DateField(unique=True, null=True, blank=True)
+    hour = models.IntegerField(default=0)
+    query_count = models.IntegerField(default=0)
