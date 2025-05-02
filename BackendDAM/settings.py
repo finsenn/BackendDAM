@@ -76,7 +76,7 @@ WSGI_APPLICATION = 'BackendDAM.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'DB-DAM-NEW',
+        'NAME': 'DBDAM',
         'USER': 'sa',
         'PASSWORD': 'Bc@f2020++',
         'HOST': '192.168.1.21',
