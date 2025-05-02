@@ -98,6 +98,9 @@ def process_logs(imported_file):
         .reset_index(name='Query Count')
     )
 
+    
+
+
     # remove old records for this file
     TotalQueriesPerDay.objects.filter(imported_file=imported_file).delete()
     TotalQueriesPerUserDay.objects.filter(imported_file=imported_file).delete()
