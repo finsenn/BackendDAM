@@ -119,3 +119,27 @@ class HourlyQueryVolume(models.Model):
 
     class Meta:
         unique_together = ('imported_file', 'date', 'hour')
+
+class SecurityEvent(models.Model):
+    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True)
+    timestamp = models.DateTimeField()
+    date = models.DateField()
+    user = models.CharField(max_length=255, null=True, blank=True)
+    event_type = models.CharField(max_length=100)  # e.g., 'FAILED_LOGIN', 'USER_CREATION'
+    details = models.TextField(null=True, blank=True)
+
+class DMLActivity(models.Model):
+    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True)
+    date = models.DateField()
+    user = models.CharField(max_length=255)
+    dml_type = models.CharField(max_length=50)  # e.g., INSERT, UPDATE, DELETE, SELECT
+    table_name = models.CharField(max_length=255, null=True, blank=True)
+    count = models.IntegerField()
+
+class DDLActivity(models.Model):
+    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True)
+    date = models.DateField()
+    user = models.CharField(max_length=255)
+    ddl_type = models.CharField(max_length=50)  # CREATE_TABLE, DROP_DB, ALTER_TABLE, etc.
+    object_name = models.CharField(max_length=255, null=True, blank=True)
+    count = models.IntegerField()
