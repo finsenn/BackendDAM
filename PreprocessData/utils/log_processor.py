@@ -195,26 +195,30 @@ def process_logs(imported_file):
     ])
 
     SecurityEvent.objects.bulk_create([
-        SecurityEvent(
-            imported_file=imported_file,
-            timestamp=row['Timestamp'],
-            date=row['Timestamp'].date(),
-            user=row['User'],
-            event_type=row['Security Event Type'],
-            query=row['Query']
-        ) for _, row in security_events.iterrows()
+    SecurityEvent(
+        imported_file=imported_file,
+        timestamp=row['Timestamp'],
+        date=row['Timestamp'].date(),
+        user=row['User'],
+        event_type=row['Security Event Type'],
+        details=row['Query']  # using 'Query' as event details
+    ) for _, row in security_events.iterrows()
     ])
-    DMLActivity.objects.bulk_create([
-        DMLActivity(
-            imported_file=imported_file,
-            timestamp=row['Timestamp'],
-            date=row['Timestamp'].date(),
-            user=row['User'],
-            query_type=row['Query Type'],
-            object_name=row.get('Object Name', ''),
-            query=row['Query']
-        ) for _, row in dml_activities.iterrows()
-    ])
+
+    
+    DDLActivity.objects.bulk_create([
+    DDLActivity(
+        imported_file=imported_file,
+        date=row['Date'],
+        user=row['User'],
+        ddl_type=row['Query Type'],
+        object_name=row.get('Object Name', None),
+        count=1
+    ) for _, row in ddl_activities.iterrows()
+])
+
+
+   
     DDLActivity.objects.bulk_create([
         DDLActivity(
             imported_file=imported_file,
