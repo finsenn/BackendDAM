@@ -14,6 +14,9 @@ from PreprocessData.models import (
     AffectedRowsPerUser,
     SuspiciousQuery,
     HourlyQueryVolume,
+    SecurityEvent,
+    DDLActivity,
+    DMLActivity,
 )
 
 input_file = './CSVDAM/input.csv'
@@ -98,7 +101,33 @@ def process_logs(imported_file):
         .reset_index(name='Query Count')
     )
 
-    
+    # Security Events
+    security_keywords = {
+        'password change': ['alter user', 'set password'],
+        'failed logon': ['failed login'],
+        'role creation': ['create role'],
+        'role deletion': ['drop role'],
+        'user creation': ['create user'],
+        'revoke permissions': ['revoke'],
+        'granted permission': ['grant'],
+        'shutdown': ['shutdown']
+    }
+
+    def classify_security_event(q):
+        ql = q.lower() if pd.notna(q) else ''
+        for event_type, patterns in security_keywords.items():
+            if any(pat in ql for pat in patterns):
+                return event_type
+        return None
+
+    df['Security Event Type'] = df['Query'].apply(classify_security_event)
+    security_events = df[df['Security Event Type'].notna()]
+
+    # DML and DDL Activities
+    dml_types = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']
+    ddl_types = ['CREATE', 'ALTER', 'DROP']
+    dml_activities = df[df['Query Type'].isin(dml_types)]
+    ddl_activities = df[df['Query Type'].isin(ddl_types)]
 
 
     # remove old records for this file
@@ -108,6 +137,9 @@ def process_logs(imported_file):
     AffectedRowsPerUser.objects.filter(imported_file=imported_file).delete()
     SuspiciousQuery.objects.filter(imported_file=imported_file).delete()
     HourlyQueryVolume.objects.filter(imported_file=imported_file).delete()
+    SecurityEvent.objects.filter(imported_file=imported_file).delete()
+    DDLActivity.objects.filter(imported_file=imported_file).delete()
+    DMLActivity.objects.filter(imported_file=imported_file).delete()
 
     # insert new summaries with FK
     TotalQueriesPerDay.objects.bulk_create([
@@ -162,16 +194,40 @@ def process_logs(imported_file):
         for _, row in hourly_query_volume.iterrows()
     ])
 
-    # cleanup exports
-    for fname in [
-        'total_queries_per_day.csv', 'total_queries_user_day.csv',
-        'total_affected_rows.csv', 'affected_rows_per_user.csv',
-        'suspicious_queries.csv', 'hourly_query_volume.csv'
-    ]:
-        try:
-            os.remove(os.path.join(output_dir, fname))
-        except OSError:
-            pass
+    SecurityEvent.objects.bulk_create([
+        SecurityEvent(
+            imported_file=imported_file,
+            timestamp=row['Timestamp'],
+            date=row['Timestamp'].date(),
+            user=row['User'],
+            event_type=row['Security Event Type'],
+            query=row['Query']
+        ) for _, row in security_events.iterrows()
+    ])
+    DMLActivity.objects.bulk_create([
+        DMLActivity(
+            imported_file=imported_file,
+            timestamp=row['Timestamp'],
+            date=row['Timestamp'].date(),
+            user=row['User'],
+            query_type=row['Query Type'],
+            object_name=row.get('Object Name', ''),
+            query=row['Query']
+        ) for _, row in dml_activities.iterrows()
+    ])
+    DDLActivity.objects.bulk_create([
+        DDLActivity(
+            imported_file=imported_file,
+            timestamp=row['Timestamp'],
+            date=row['Timestamp'].date(),
+            user=row['User'],
+            query_type=row['Query Type'],
+            object_name=row.get('Object Name', ''),
+            query=row['Query']
+        ) for _, row in ddl_activities.iterrows()
+    ])
+
+   
 
     return f"✅ Data processed for file ID {imported_file.id}!"
 
