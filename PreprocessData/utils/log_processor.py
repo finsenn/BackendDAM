@@ -309,7 +309,7 @@ def import_logs_to_db():
         # archive the input file
         archive_dir = './CSVDAM/archive'
         os.makedirs(archive_dir, exist_ok=True)
-        file_date = pd.to_datetime(df['Time Group - 1 Minute'], errors='coerce').dropna().min()
+        file_date = pd.to_datetime(df['Time Group - 1 Minute'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce').dropna().min()
         timestamp_str = file_date.strftime('%Y%m%d_%H%M%S') if not pd.isna(file_date) else datetime.now().strftime('%Y%m%d_%H%M%S')
         new_name = f"input_{timestamp_str}.csv"
         os.rename(input_file, os.path.join(archive_dir, new_name))
