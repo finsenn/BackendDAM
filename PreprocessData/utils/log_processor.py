@@ -123,7 +123,18 @@ def process_logs(imported_file):
     df['Security Event Type'] = df['Query'].apply(classify_security_event)
     security_events = df[df['Security Event Type'].notna()]
 
-    
+        # Extract object/table name from query as best effort
+    def extract_object_name(query):
+        if pd.isna(query):
+            return None
+        match = re.search(r'\b(from|into|update|table|join|delete\s+from|truncate\s+table|create\s+table|drop\s+table)\s+([`"\[]?\w+[`"\]]?)', query, re.IGNORECASE)
+        if match:
+            return match.group(2).strip('`"[]')
+        return None
+
+    df['Object Name'] = df['Query'].apply(extract_object_name)
+
+
         # Define the DML and DDL types
     dml_types = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']
     ddl_types = ['CREATE', 'ALTER', 'DROP']
