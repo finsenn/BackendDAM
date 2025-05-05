@@ -123,12 +123,28 @@ def process_logs(imported_file):
     df['Security Event Type'] = df['Query'].apply(classify_security_event)
     security_events = df[df['Security Event Type'].notna()]
 
-    # DML and DDL Activities
+    
+        # Define the DML and DDL types
     dml_types = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']
     ddl_types = ['CREATE', 'ALTER', 'DROP']
+
+    # Filter the DataFrame
     dml_activities = df[df['Query Type'].isin(dml_types)]
     ddl_activities = df[df['Query Type'].isin(ddl_types)]
 
+    dml_summary = (
+    dml_activities
+    .groupby(['Date', 'User', 'Query Type', 'Object Name'])
+    .size()
+    .reset_index(name='Count')
+    )
+
+    ddl_summary = (
+    ddl_activities
+    .groupby(['Date', 'User', 'Query Type', 'Object Name'])
+    .size()
+    .reset_index(name='Count')
+    )
 
     # remove old records for this file
     TotalQueriesPerDay.objects.filter(imported_file=imported_file).delete()
@@ -213,22 +229,21 @@ def process_logs(imported_file):
         user=row['User'],
         ddl_type=row['Query Type'],
         object_name=row.get('Object Name', None),
-        count=1
-    ) for _, row in ddl_activities.iterrows()
-])
+        count=row['Count']
+    ) for _, row in ddl_summary.iterrows()
+    ])
 
 
    
-    DDLActivity.objects.bulk_create([
-        DDLActivity(
-            imported_file=imported_file,
-            timestamp=row['Timestamp'],
-            date=row['Timestamp'].date(),
-            user=row['User'],
-            query_type=row['Query Type'],
-            object_name=row.get('Object Name', ''),
-            query=row['Query']
-        ) for _, row in ddl_activities.iterrows()
+    DMLActivity.objects.bulk_create([
+    DMLActivity(
+        imported_file=imported_file,
+        date=row['Date'],
+        user=row['User'],
+        dml_type=row['Query Type'],
+        table_name=row.get('Object Name', None),
+        count=row['Count']
+    ) for _, row in dml_summary.iterrows()
     ])
 
    
