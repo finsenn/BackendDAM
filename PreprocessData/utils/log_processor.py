@@ -253,9 +253,10 @@ def process_logs(imported_file):
         user=row['User'],
         dml_type=row['Query Type'],
         table_name=row.get('Object Name', None),
-        count=row['Count']
-    ) for _, row in dml_summary.iterrows()
-    ])
+        query=row['Query']
+    )
+    for _, row in dml_summary.iterrows()
+])
 
    
 
