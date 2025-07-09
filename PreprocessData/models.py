@@ -134,7 +134,7 @@ class DMLActivity(models.Model):
     user = models.CharField(max_length=255)
     dml_type = models.CharField(max_length=50)  # e.g., INSERT, UPDATE, DELETE, SELECT
     table_name = models.CharField(max_length=255, null=True, blank=True)
-    count = models.IntegerField()
+    query = models.TextField(null=True, blank=True)
 
 class DDLActivity(models.Model):
     imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True)
