@@ -47,8 +47,7 @@ def process_logs(imported_file):
     if not os.path.exists(output_dir):
         return f"❌ The directory '{output_dir}' does not exist. Please create it manually."
 
-    # ### FIX 1: Correctly classify queries by what they START WITH ###
-    # This prevents misclassifying DECLARE statements as INSERT.
+    # Correctly classify queries by what they START WITH
     def classify_query(q):
         if pd.isna(q):
             return 'UNKNOWN'
@@ -132,27 +131,11 @@ def process_logs(imported_file):
     df['Security Event Type'] = df['Query'].apply(classify_security_event)
     security_events = df[df['Security Event Type'].notna()]
 
-        # Extract object/table name from query as best effort
-    def extract_object_name(query):
-        if pd.isna(query):
-            return None
-        
-        # ### FIX: Regex improved to handle schema-qualified names ###
-        # This now correctly captures the full name like 'bca.Cust_Segment_Dimention'
-        # instead of stopping at the period. It also now recognizes 'delete' by itself.
-        match = re.search(
-            r'\b(from|into|update|table|join|delete|delete\s+from|truncate\s+table|create\s+table|drop\s+table|insert\s+bulk)\s+([`"\[\]\w\.]+)',
-            query,
-            re.IGNORECASE
-        )
-        if match:
-            return match.group(2).strip('`"[]')
-        return None
-
-    df['Object Name'] = df['Query'].apply(extract_object_name)
+    # Use the existing 'Object' column from the CSV for reliability.
+    df['Object Name'] = df['Object']
 
 
-        # Define the DML and DDL types
+    # Define the DML and DDL types
     dml_types = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']
     ddl_types = ['CREATE', 'ALTER', 'DROP']
 
@@ -161,18 +144,17 @@ def process_logs(imported_file):
     ddl_activities = df[df['Query Type'].isin(ddl_types)]
 
     
-    # ### FIX 2: Correctly count all queries by removing 'Object Name' ###
-    # This will give you the total count per query type, not split by table.
+    # ### FIX: Group summaries by Object Name to associate counts correctly ###
     dml_summary = (
     dml_activities
-    .groupby(['Date', 'User', 'Query Type'])
+    .groupby(['Date', 'User', 'Query Type', 'Object Name'])
     .size()
     .reset_index(name='Count')
     )
 
     ddl_summary = (
     ddl_activities
-    .groupby(['Date', 'User', 'Query Type'])
+    .groupby(['Date', 'User', 'Query Type', 'Object Name'])
     .size()
     .reset_index(name='Count')
     )
@@ -253,7 +235,7 @@ def process_logs(imported_file):
         date=row['Timestamp'].date(),
         user=row['User'],
         event_type=row['Security Event Type'],
-        details=row['Query']  # using 'Query' as event details
+        details=row['Query']
     ) for _, row in security_events.iterrows()
     ])
 
@@ -277,7 +259,7 @@ def process_logs(imported_file):
         date=row['Date'],
         user=row['User'],
         dml_type=row['Query Type'],
-        table_name=row.get('Object Name', None),
+        object_name=row.get('Object Name', None), # Use object_name
         count=row['Count']
     )
     for _, row in dml_summary.iterrows()
@@ -289,8 +271,8 @@ def process_logs(imported_file):
         date=row['Date'],
         user=row['User'],
         dml_type=row['Query Type'],
-        table_name=row.get('Object Name', None),
-        query=row['Query'] # The most important field!
+        object_name=row.get('Object Name', None), # Use object_name
+        query=row['Query']
     )
     for _, row in dml_activities.iterrows()
     ])
@@ -301,8 +283,8 @@ def process_logs(imported_file):
         date=row['Date'],
         user=row['User'],
         ddl_type=row['Query Type'],
-        table_name=row.get('Object Name', None), # Note: DDLQueryLog model needs 'object_name'
-        query=row['Query'] # The most important field!
+        object_name=row.get('Object Name', None),
+        query=row['Query']
     )
     for _, row in ddl_activities.iterrows()
     ])
