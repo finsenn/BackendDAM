@@ -135,6 +135,7 @@ class DMLActivity(models.Model):
     dml_type = models.CharField(max_length=50)  # e.g., INSERT, UPDATE, DELETE, SELECT
     table_name = models.CharField(max_length=255, null=True, blank=True)
     query = models.TextField(null=True, blank=True)
+    count = models.IntegerField()
 
 class DDLActivity(models.Model):
     imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE, null=True, blank=True)
@@ -143,3 +144,19 @@ class DDLActivity(models.Model):
     ddl_type = models.CharField(max_length=50)  # CREATE_TABLE, DROP_DB, ALTER_TABLE, etc.
     object_name = models.CharField(max_length=255, null=True, blank=True)
     count = models.IntegerField()
+
+class DMLQueryLog(models.Model):
+    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE)
+    date = models.DateField() # Or DateTimeField if you have timestamps
+    user = models.CharField(max_length=128)
+    dml_type = models.CharField(max_length=50)
+    table_name = models.CharField(max_length=255, null=True, blank=True)
+    query_text = models.TextField() # The actual SQL query
+
+class DDLQueryLog(models.Model):
+    imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE)
+    date = models.DateField() # Or DateTimeField if you have timestamps
+    user = models.CharField(max_length=128)
+    dml_type = models.CharField(max_length=50)
+    table_name = models.CharField(max_length=255, null=True, blank=True)
+    query_text = models.TextField() # The actual SQL query

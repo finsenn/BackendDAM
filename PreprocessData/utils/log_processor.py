@@ -17,6 +17,8 @@ from PreprocessData.models import (
     SecurityEvent,
     DDLActivity,
     DMLActivity,
+    DMLQueryLog,
+    DDLQueryLog,
 )
 
 input_file = './CSVDAM/input.csv'
@@ -143,6 +145,9 @@ def process_logs(imported_file):
     dml_activities = df[df['Query Type'].isin(dml_types)]
     ddl_activities = df[df['Query Type'].isin(ddl_types)]
 
+    
+
+
     dml_summary = (
     dml_activities
     .groupby(['Date', 'User', 'Query Type', 'Object Name'])
@@ -253,10 +258,34 @@ def process_logs(imported_file):
         user=row['User'],
         dml_type=row['Query Type'],
         table_name=row.get('Object Name', None),
-        query=row['Query']
+        count=row['Count']
     )
     for _, row in dml_summary.iterrows()
 ])
+
+    DMLQueryLog.objects.bulk_create([
+    DMLQueryLog(
+        imported_file=imported_file,
+        date=row['Date'],
+        user=row['User'],
+        dml_type=row['Query Type'],
+        table_name=row.get('Object Name', None),
+        query_text=row['Query Text'] # The most important field!
+    )
+    for _, row in dml_activities.iterrows()
+    ])
+
+    DDLQueryLog.objects.bulk_create([
+    DDLQueryLog(
+        imported_file=imported_file,
+        date=row['Date'],
+        user=row['User'],
+        dml_type=row['Query Type'],
+        table_name=row.get('Object Name', None),
+        query_text=row['Query Text'] # The most important field!
+    )
+    for _, row in dml_activities.iterrows()
+    ])
 
    
 
