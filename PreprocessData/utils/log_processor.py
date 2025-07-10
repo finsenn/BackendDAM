@@ -136,7 +136,15 @@ def process_logs(imported_file):
     def extract_object_name(query):
         if pd.isna(query):
             return None
-        match = re.search(r'\b(from|into|update|table|join|delete\s+from|truncate\s+table|create\s+table|drop\s+table)\s+([`"\[]?\w+[`"\]]?)', query, re.IGNORECASE)
+        
+        # ### FIX: Regex improved to handle schema-qualified names ###
+        # This now correctly captures the full name like 'bca.Cust_Segment_Dimention'
+        # instead of stopping at the period. It also now recognizes 'delete' by itself.
+        match = re.search(
+            r'\b(from|into|update|table|join|delete|delete\s+from|truncate\s+table|create\s+table|drop\s+table|insert\s+bulk)\s+([`"\[\]\w\.]+)',
+            query,
+            re.IGNORECASE
+        )
         if match:
             return match.group(2).strip('`"[]')
         return None
