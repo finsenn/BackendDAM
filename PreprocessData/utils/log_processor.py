@@ -293,7 +293,7 @@ def process_logs(imported_file):
         date=row['Date'],
         user=row['User'],
         ddl_type=row['Query Type'],
-        object_name=row.get('Object Name', None), # Note: DDLQueryLog model needs 'object_name'
+        table_name=row.get('Object Name', None), # Note: DDLQueryLog model needs 'object_name'
         query=row['Query'] # The most important field!
     )
     for _, row in ddl_activities.iterrows()
