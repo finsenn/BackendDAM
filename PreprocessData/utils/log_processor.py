@@ -162,6 +162,8 @@ def process_logs(imported_file):
     .reset_index(name='Count')
     )
 
+    
+
     # remove old records for this file
     TotalQueriesPerDay.objects.filter(imported_file=imported_file).delete()
     TotalQueriesPerUserDay.objects.filter(imported_file=imported_file).delete()
@@ -172,7 +174,10 @@ def process_logs(imported_file):
     SecurityEvent.objects.filter(imported_file=imported_file).delete()
     DDLActivity.objects.filter(imported_file=imported_file).delete()
     DMLActivity.objects.filter(imported_file=imported_file).delete()
+    DMLQueryLog.objects.filter(imported_file=imported_file).delete()
+    DDLQueryLog.objects.filter(imported_file=imported_file).delete()
 
+    
     # insert new summaries with FK
     TotalQueriesPerDay.objects.bulk_create([
         TotalQueriesPerDay(
@@ -270,7 +275,7 @@ def process_logs(imported_file):
         user=row['User'],
         dml_type=row['Query Type'],
         table_name=row.get('Object Name', None),
-        query_text=row['Query Text'] # The most important field!
+        query=row['Query'] # The most important field!
     )
     for _, row in dml_activities.iterrows()
     ])
@@ -280,14 +285,14 @@ def process_logs(imported_file):
         imported_file=imported_file,
         date=row['Date'],
         user=row['User'],
-        dml_type=row['Query Type'],
+        ddl_type=row['Query Type'],
         table_name=row.get('Object Name', None),
-        query_text=row['Query Text'] # The most important field!
+        query=row['Query'] # The most important field!
     )
-    for _, row in dml_activities.iterrows()
+    for _, row in ddl_activities.iterrows()
     ])
 
-   
+    
 
     return f"✅ Data processed for file ID {imported_file.id}!"
 
