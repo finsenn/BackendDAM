@@ -157,6 +157,6 @@ class DDLQueryLog(models.Model):
     imported_file = models.ForeignKey(ImportedFile, on_delete=models.CASCADE)
     date = models.DateField() # Or DateTimeField if you have timestamps
     user = models.CharField(max_length=128)
-    dml_type = models.CharField(max_length=50)
+    ddl_type = models.CharField(max_length=50)
     table_name = models.CharField(max_length=255, null=True, blank=True)
     query = models.TextField() # The actual SQL query
