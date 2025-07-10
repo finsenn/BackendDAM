@@ -144,17 +144,17 @@ def process_logs(imported_file):
     ddl_activities = df[df['Query Type'].isin(ddl_types)]
 
     
-    # ### FIX: Group summaries WITHOUT Object Name to get the correct total count ###
+    # ### FIX: Group summaries by Object Name to associate counts correctly ###
     dml_summary = (
     dml_activities
-    .groupby(['Date', 'User', 'Query Type'])
+    .groupby(['Date', 'User', 'Query Type', 'Object Name'])
     .size()
     .reset_index(name='Count')
     )
 
     ddl_summary = (
     ddl_activities
-    .groupby(['Date', 'User', 'Query Type'])
+    .groupby(['Date', 'User', 'Query Type', 'Object Name'])
     .size()
     .reset_index(name='Count')
     )
@@ -259,7 +259,7 @@ def process_logs(imported_file):
         date=row['Date'],
         user=row['User'],
         dml_type=row['Query Type'],
-        object_name=row.get('Object Name', None), # This will be None, which is OK
+        object_name=row.get('Object Name', None), # Use object_name
         count=row['Count']
     )
     for _, row in dml_summary.iterrows()
@@ -271,7 +271,7 @@ def process_logs(imported_file):
         date=row['Date'],
         user=row['User'],
         dml_type=row['Query Type'],
-        object_name=row.get('Object Name', None), # This uses the correct object name
+        object_name=row.get('Object Name', None), # Use object_name
         query=row['Query']
     )
     for _, row in dml_activities.iterrows()
@@ -283,7 +283,7 @@ def process_logs(imported_file):
         date=row['Date'],
         user=row['User'],
         ddl_type=row['Query Type'],
-        object_name=row.get('Object Name', None), # This uses the correct object name
+        object_name=row.get('Object Name', None),
         query=row['Query']
     )
     for _, row in ddl_activities.iterrows()
