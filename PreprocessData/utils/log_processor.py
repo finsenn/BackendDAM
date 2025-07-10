@@ -47,22 +47,29 @@ def process_logs(imported_file):
     if not os.path.exists(output_dir):
         return f"❌ The directory '{output_dir}' does not exist. Please create it manually."
 
-    # classify query types
+    # ### FIX 1: Correctly classify queries by what they START WITH ###
+    # This prevents misclassifying DECLARE statements as INSERT.
     def classify_query(q):
         if pd.isna(q):
             return 'UNKNOWN'
-        ql = q.lower()
-        if 'select' in ql:
+        
+        q_clean = q.strip().lower()
+
+        if q_clean.startswith('select'):
             return 'SELECT'
-        elif 'insert' in ql:
+        elif q_clean.startswith('insert'):
             return 'INSERT'
-        elif 'truncate' in ql:
-            return 'TRUNCATE'
-        elif 'update' in ql:
+        elif q_clean.startswith('update'):
             return 'UPDATE'
-        elif 'delete' in ql:
+        elif q_clean.startswith('delete'):
             return 'DELETE'
-        elif 'drop' in ql:
+        elif q_clean.startswith('truncate'):
+            return 'TRUNCATE'
+        elif q_clean.startswith('create'):
+            return 'CREATE'
+        elif q_clean.startswith('alter'):
+            return 'ALTER'
+        elif q_clean.startswith('drop'):
             return 'DROP'
         return 'OTHER'
 
@@ -87,7 +94,7 @@ def process_logs(imported_file):
     )
     suspicious_keywords = [
         'truncate','drop','delete','xp_cmdshell',
-        'sp_executesql','insert bulk','with\(nolock\)'
+        'sp_executesql','insert bulk',r'with\(nolock\)'
     ]
     df['IsSuspicious'] = df['Query'].apply(
         lambda q: any(
@@ -146,18 +153,18 @@ def process_logs(imported_file):
     ddl_activities = df[df['Query Type'].isin(ddl_types)]
 
     
-
-
+    # ### FIX 2: Correctly count all queries by removing 'Object Name' ###
+    # This will give you the total count per query type, not split by table.
     dml_summary = (
     dml_activities
-    .groupby(['Date', 'User', 'Query Type', 'Object Name'])
+    .groupby(['Date', 'User', 'Query Type'])
     .size()
     .reset_index(name='Count')
     )
 
     ddl_summary = (
     ddl_activities
-    .groupby(['Date', 'User', 'Query Type', 'Object Name'])
+    .groupby(['Date', 'User', 'Query Type'])
     .size()
     .reset_index(name='Count')
     )
@@ -255,7 +262,7 @@ def process_logs(imported_file):
     ])
 
 
-   
+    
     DMLActivity.objects.bulk_create([
     DMLActivity(
         imported_file=imported_file,
@@ -286,7 +293,7 @@ def process_logs(imported_file):
         date=row['Date'],
         user=row['User'],
         ddl_type=row['Query Type'],
-        table_name=row.get('Object Name', None),
+        object_name=row.get('Object Name', None), # Note: DDLQueryLog model needs 'object_name'
         query=row['Query'] # The most important field!
     )
     for _, row in ddl_activities.iterrows()
